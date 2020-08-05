@@ -140,7 +140,7 @@ def createImage(folder, triInd, picSize):
     draw = ImageDraw.Draw(img)
     bBox = writeText(colour, picSize, draw)
     drawFigures(colour, picSize, draw, bBox)
-    name = folder + '/testpic_%0d_%0d_%0d.jpeg' % colour['rgb']
+    name = folder + '/testpic_%03d_%03d_%03d.jpeg' % colour['rgb']
     img.save(name)
     return name
 

@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from operator import mod
 from functools import reduce
 from random import randrange
-from math import sqrt
+from math import sqrt, pi
 from argparse import ArgumentParser
 
 defaultSize = (4000, 2000)
@@ -118,24 +118,28 @@ def genRect(borderRects):
 #    |             |
 # 3  +-------------+
 def prepTriangle(draw, colour, rect):
-    width = rect[2] - rect[0]
-    height = rect[3] - rect[1]
-    w2 = rect[0] + randrange(int(width / 2 + 0.5))
-    h2 = rect[1] + randrange(int(height / 2 + 0.5))
+    w = rect[2] - rect[0]
+    h = rect[3] - rect[1]
+    w2 = rect[0] + randrange(int(w / 2 + 0.5))
+    h2 = rect[1] + randrange(int(h / 2 + 0.5))
     switcher = (
-        lambda : ((w2, rect[1]), (rect[2], rect[3]), (rect[0], h2)),
-        lambda : ((rect[2], h2), (rect[0], rect[3]), (w2, rect[1])),
-        lambda : ((w2, rect[3]), (rect[0], rect[1]), (rect[2], h2)),
-        lambda : ((rect[0], h2), (rect[2], rect[1]), (w2, rect[3])),
+        lambda : (((w2, rect[1]), (rect[2], rect[3]), (rect[0], h2)),
+                 w * h - (w2 * h2 + (w - w2) * h + w * (h - h2)) / 2),
+        lambda : (((rect[2], h2), (rect[0], rect[3]), (w2, rect[1])),
+                 w * h - (w2 * h + (w - w2) * h2 + w * (h - h2)) / 2),
+        lambda : (((w2, rect[3]), (rect[0], rect[1]), (rect[2], h2)),
+                 w * h - (w * h2 + (w - w2) * (h - h2) + w2 * h) / 2),
+        lambda : (((rect[0], h2), (rect[2], rect[1]), (w2, rect[3])),
+                 w * h - (w * h2 + (w - w2) * h + w2 * (h - h2)) / 2),
     )
     triXY = switcher[randrange(len(switcher))]()
     #print(triXY)
-    return {'area' : 1/3 * width * height, 'draw' : lambda : draw.polygon(triXY, fill=colour['rgb'], outline=colour['inv'])}
+    return {'area' : triXY[1], 'draw' : lambda : draw.polygon(triXY[0], fill=colour['rgb'], outline=colour['inv'])}
 
 def prepEllipse(draw, colour, rect):
     width = rect[2] - rect[0]
     height = rect[3] - rect[1]
-    return {'area' : 3/4 * width * height, 'draw' : lambda : draw.ellipse(rect, fill=colour['rgb'], outline=colour['inv'])}
+    return {'area' : pi/4 * width * height, 'draw' : lambda : draw.ellipse(rect, fill=colour['rgb'], outline=colour['inv'])}
 
 def prepRectangle(draw, colour, rect):
     width = rect[2] - rect[0]

@@ -111,15 +111,26 @@ def genRect(borderRects):
             return cnd
     print("Here")            
     return genRectCnd(bbox)
- 
 
-def drawTriangle(draw, colour, rect):
+#    0     w2      2 
+# 1  +-------------+
+#    |             |
+# h2 |             |
+#    |             |
+# 3  +-------------+
+def drawTriangle(draw, colour, rect):    
     width = rect[2] - rect[0]
     height = rect[3] - rect[1]
-    triXY = ((rect[0] + randrange(int(width / 2 + 0.5)), rect[1]),
-             (rect[2], rect[3]),
-             (rect[0], rect[1] + randrange(int(height / 2 + 0.5))))      
-    # print(triXY)                   
+    w2 = rect[0] + randrange(int(width / 2 + 0.5))
+    h2 = rect[1] + randrange(int(height / 2 + 0.5))
+    switcher = {
+        0: lambda : ((w2, rect[1]), (rect[2], rect[3]), (rect[0], h2)),
+        1: lambda : ((rect[2], h2), (rect[0], rect[3]), (w2, rect[1])),
+        2: lambda : ((w2, rect[3]), (rect[0], rect[1]), (rect[2], h2)),
+        3: lambda : ((rect[0], h2), (rect[2], rect[1]), (w2, rect[3])),
+    }
+    triXY = switcher.get(randrange(4), lambda : switcher[0])()
+    #print(triXY)                   
     draw.polygon(triXY, fill=colour['rgb'], outline=colour['inv'])
 
 def drawFigures(colour, picSize, draw, inBox):
@@ -131,8 +142,10 @@ def drawFigures(colour, picSize, draw, inBox):
         2: lambda draw, fClr, fRct : draw.rectangle(fRct, fill=fClr['rgb'], outline=fClr['inv']),
     }
     for i in range(total):
-        func = switcher.get(randrange(3), lambda: "Invalid Id")
-        func(draw, randomColour(colour), genRect(borderRects))
+        figColor = randomColour(colour)
+        figRect = genRect(borderRects)
+        func = switcher.get(randrange(3), lambda : switcher[0](draw, figColor, figRect))
+        func(draw, figColor, figRect)
 
 def createImage(folder, triInd, picSize):    
     colour = calcColor(triInd)

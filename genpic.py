@@ -156,14 +156,22 @@ def drawFigures(colour, picSize, draw, inBox):
     for figure in figures:
         figure['draw']()
 
-def createImage(folder, triInd, picSize):
-    colour = calcColor(triInd)
+genName = lambda folder, colour: folder + '/testpic_%03d_%03d_%03d.jpeg' % colour['rgb']
+
+def createImage(name, colour, picSize):
     img = Image.new('RGB', picSize, color=colour['rgb'])
     draw = ImageDraw.Draw(img)
     bBox = writeText(colour, picSize, draw)
     drawFigures(colour, picSize, draw, bBox)
-    name = folder + '/testpic_%03d_%03d_%03d.jpeg' % colour['rgb']
     img.save(name)
+
+def genImage(folder, names, triInd, picSize):
+    colour = calcColor(triInd)
+    name = folder + '/testpic_%03d_%03d_%03d.jpeg' % colour['rgb']
+    if name in names:
+        return None
+    createImage(name, colour, picSize)        
+    names.add(name)    
     return name
 
 def main(amount, folder):
@@ -172,20 +180,25 @@ def main(amount, folder):
     blues = list(range(1, 256, int((256 - 1) / steps + 0.5)))[:steps]
     greenSteps = int(max(1, amount / steps / steps))
     greens = list(range(2, 256, int((256 - 2) / greenSteps + 0.5)))[:greenSteps]
-    count = 0
+    names = set()
     for r in reds:
         for b in blues:
             for g in greens:
-                name = createImage(folder, (r,g,b), defaultSize)
-                count += 1
-                print("%d: %s %.3f%%" % (count, name, 100 * count/amount))
+                name = genImage(folder, names, (r,g,b), defaultSize)
+                if name is not None:
+                    print("%d: %s %.3f%%" % (len(names), name, 100 * len(names)/amount))
     remain = amount - steps * steps * greenSteps
-    if remain > 0:
-        greens = list(range(0, 256, int((256 - 2) / remain + 0.5)))[:remain]
-        for g in greens:
-            name = createImage(folder, (128, g, 128), defaultSize)
-            count += 1
-            print("%d*: %s %.3f%%" % (count, name, 100 * count/amount))
+    if 0 == remain:
+        return True
+    for r in range(0, 256):
+        for b in range(0, 256):
+            for g in range(0, 256):
+                name = genImage(folder, names, (r,g,b), defaultSize)
+                if name is not None:
+                    print("%d: %s %.3f%%" % (len(names), name, 100 * len(names)/amount))
+                if len(names) == amount:
+                    return True
+    return len(names) == amount
 
 parser = ArgumentParser(description='Generate random images.')
 parser.add_argument('--amount', nargs='?', type=int, default=1, help='amount of images to generate')
